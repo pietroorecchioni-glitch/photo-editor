@@ -80,6 +80,14 @@ main {
   font-size: 0.85rem;
 }
 
+#file-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
 /* ── Editor ── */
 .editor {
   display: grid;
