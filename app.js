@@ -58,14 +58,38 @@ fileInput.addEventListener('change', () => {
   if (fileInput.files[0]) loadFile(fileInput.files[0]);
 });
 
+const MAX_PX = 2048; // iOS Safari canvas limit
+
 function loadFile(file) {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    state.sourceImage = img;
-    resetState();
-    drawImage();
-    showEditor();
+    // Scale down large images (iPhone/iPad photos can be 12MP+)
+    let w = img.naturalWidth  || img.width;
+    let h = img.naturalHeight || img.height;
+    if (w > MAX_PX || h > MAX_PX) {
+      const ratio = Math.min(MAX_PX / w, MAX_PX / h);
+      w = Math.round(w * ratio);
+      h = Math.round(h * ratio);
+    }
+    // Draw scaled version to an offscreen canvas, then use that as source
+    const off = document.createElement('canvas');
+    off.width  = w;
+    off.height = h;
+    off.getContext('2d').drawImage(img, 0, 0, w, h);
+
+    const scaled = new Image();
+    scaled.onload = () => {
+      state.sourceImage = scaled;
+      resetState();
+      drawImage();
+      showEditor();
+    };
+    scaled.src = off.toDataURL('image/jpeg', 0.92);
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => {
+    alert("Impossibile caricare l'immagine. Prova con un altro file.");
     URL.revokeObjectURL(url);
   };
   img.src = url;
